@@ -1,14 +1,14 @@
 // External includes.
+use dungen_minion::geometry::*;
+use dungen_minion::*;
 
 // Standard includes.
 
 // Internal includes.
-use generic_dungen::*;
-use geometry::*;
 
 fn main() {
     let dungen = DunGen::new(RoomHashMap::default())
-        .gen_with(EmptyRoomDunGen::new(Size::new(80, 40)))
+        .gen_with(EmptyRoomDunGen::new(Size::new(40, 30)))
         .gen::<WalledRoomDunGen>()
         .build();
 
