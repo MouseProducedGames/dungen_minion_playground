@@ -4,7 +4,7 @@
 
 // Internal includes.
 use generic_dungen::*;
-use traits::*;
+use geometry::*;
 
 fn main() {
     let dungen = DunGen::new(RoomHashMap::default())
