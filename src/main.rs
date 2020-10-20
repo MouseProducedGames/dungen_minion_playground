@@ -3,16 +3,24 @@ use dungen_minion::geometry::*;
 use dungen_minion::*;
 
 // Standard includes.
+use std::collections::HashSet;
 
 // Internal includes.
 
 #[allow(clippy::borrowed_box)]
-fn draw_map(map_id: MapId) {
+fn draw_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
+    if drawn.contains(&map_id) {
+        return;
+    }
+    drawn.insert(map_id);
+
+    println!("Map");
     let maps = MAPS.read();
     let map = maps[map_id].read();
+    println!("{}", map.area());
     for y in map.area().position().y()..=map.area().bottom() {
         for x in map.area().position().x()..=map.area().right() {
-            let tile_type = map.tile_type_at_local(Position::new(x, y));
+            let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
                 Some(TileType::Void) => ' ',
@@ -28,18 +36,24 @@ fn draw_map(map_id: MapId) {
     }
 
     for portal in map.portals() {
-        println!("Map");
-        draw_placed_map(portal.target());
+        draw_placed_map(portal.target(), drawn);
     }
 }
 
 #[allow(clippy::borrowed_box)]
-fn draw_placed_map(map_id: MapId) {
+fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
+    if drawn.contains(&map_id) {
+        return;
+    }
+    drawn.insert(map_id);
+
+    println!("Map");
     let maps = MAPS.read();
     let map = maps[map_id].read();
+    println!("{}", map.area());
     for y in map.area().position().y()..=map.area().bottom() {
         for x in map.area().position().x()..=map.area().right() {
-            let tile_type = map.tile_type_at_local(Position::new(x, y));
+            let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
                 Some(TileType::Void) => ' ',
@@ -55,33 +69,27 @@ fn draw_placed_map(map_id: MapId) {
     }
 
     for portal in map.portals() {
-        println!("Map");
-        draw_placed_map(portal.target());
+        draw_placed_map(portal.target(), drawn);
     }
 }
 
 fn main() {
-    // We could provide CountRange directly to EdgePortalsGenerator, but that would not let us
-    // test that we have the right number of portals.
-    // This CountRange will generate a number in the range [4, 9].
-    let num_sub_maps = CountRange::new(4, 9).provide_count();
+    let num_portals = CountRange::new(2, 5).provide_count();
     let map_id = DunGen::new(SparseMap::new())
-        .gen_with(FillTilesGenerator::new(Size::new(60, 30), TileType::Void))
-        .gen_with(SubMapGenerator::new(
-            &[SubMapGeneratorSet::new(
-                &num_sub_maps,
-                &Area::new(Position::new(0, 0), Size::new(48, 18)),
-                Some(Box::new(SparseMap::new)),
-                Some(&[&EmptyRoomGenerator::new(SizeRange::new(
-                    Size::new(6, 6),
-                    Size::new(12, 12),
-                ))]),
-            )],
-            Some(Box::new(SparseMap::new)),
-            Some(&[&WalledRoomGenerator::new(Size::zero())]),
+        .gen_with(SequentialGenerator::new(&[
+            &EmptyRoomGenerator::new(Size::new(12, 8)),
+            &WalledRoomGenerator::new(Size::zero()),
+            &EdgePortalsGenerator::new(num_portals, Box::new(SparseMap::new)),
+        ]))
+        .gen_with(TraversePortalsGenerator::new(SequentialGenerator::new(&[
+            &EmptyRoomGenerator::new(Size::new(8, 6)),
+            &WalledRoomGenerator::new(Size::zero()),
+        ])))
+        .gen_with(TraverseThisAndPortalsGenerator::new(
+            ReciprocatePortalsGenerator::new(),
         ))
+        .gen_with(MergePortalMapsAsSubMapsGenerator::new(|_| true))
         .build();
 
-    println!("Map");
-    draw_map(map_id);
+    draw_map(map_id, &mut HashSet::new());
 }
