@@ -74,22 +74,66 @@ fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
 }
 
 fn main() {
+    let map_id = DunGen::new(SparseMap::new())
+        .gen_with(EmptyRoomGenerator::new(Size::new(10, 10)))
+        .gen_with(WalledRoomGenerator::new(Size::zero()))
+        .build();
+
+    draw_map(map_id, &mut HashSet::new());
+
+    {
+        let maps = MAPS.read();
+        let mut map = maps[map_id].write();
+        for y in 4..=5 {
+            for x in 4..=5 {
+                map.tile_type_at_local_set(Position::new(x, y), TileType::Void);
+            }
+        }
+    }
+
+    draw_map(map_id, &mut HashSet::new());
+
+    let map_id = DunGen::new(map_id)
+        .gen_with(WalledRoomGenerator::new(Size::zero()))
+        .build();
+
+    /*
     let num_portals = CountRange::new(2, 5).provide_count();
     let map_id = DunGen::new(SparseMap::new())
         .gen_with(SequentialGenerator::new(&[
             &EmptyRoomGenerator::new(Size::new(12, 8)),
-            &WalledRoomGenerator::new(Size::zero()),
             &EdgePortalsGenerator::new(num_portals, Box::new(SparseMap::new)),
+            // &EdgePortalsGenerator::new(1, Box::new(SparseMap::new)),
         ]))
-        .gen_with(TraversePortalsGenerator::new(SequentialGenerator::new(&[
-            &EmptyRoomGenerator::new(Size::new(8, 6)),
-            &WalledRoomGenerator::new(Size::zero()),
-        ])))
+        .gen_with(TraversePortalsGenerator::new(EmptyRoomGenerator::new(
+            Size::new(8, 6),
+        )))
+        .gen_with(TraversePortalsGenerator::new(IfMapThenGenerator::new(
+            |map_id| {
+                let maps = MAPS.read();
+                let map = maps[map_id].read();
+                map.portal_count() == 0
+            },
+            EdgePortalsGenerator::new(CountRange::new(2, 5), Box::new(SparseMap::new)),
+            // EdgePortalsGenerator::new(1, Box::new(SparseMap::new)),
+        )))
+        .gen_with(TraversePortalsGenerator::new(IfMapThenGenerator::new(
+            |map_id| {
+                let maps = MAPS.read();
+                let map = maps[map_id].read();
+                *map.size() == Size::zero()
+            },
+            EmptyRoomGenerator::new(SizeRange::new(Size::new(6, 6), Size::new(12, 12))),
+        )))
         .gen_with(TraverseThisAndPortalsGenerator::new(
-            ReciprocatePortalsGenerator::new(),
+            SequentialGenerator::new(&[
+                &WalledRoomGenerator::new(Size::zero()),
+                &ReciprocatePortalsGenerator::new(),
+            ]),
         ))
-        .gen_with(MergePortalMapsAsSubMapsGenerator::new(|_| true))
+        .gen_with(MergePortalMapsAsSubMapsGenerator::new(2, |_| true))
         .build();
+    */
 
     draw_map(map_id, &mut HashSet::new());
 }
