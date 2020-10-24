@@ -18,8 +18,8 @@ fn draw_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
     let maps = MAPS.read();
     let map = maps[map_id].read();
     println!("{}", map.area());
-    for y in map.area().position().y()..=map.area().bottom() {
-        for x in map.area().position().x()..=map.area().right() {
+    for y in map.top()..=map.area().bottom() {
+        for x in map.left()..=map.area().right() {
             let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
@@ -51,8 +51,8 @@ fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
     let maps = MAPS.read();
     let map = maps[map_id].read();
     println!("{}", map.area());
-    for y in map.area().position().y()..=map.area().bottom() {
-        for x in map.area().position().x()..=map.area().right() {
+    for y in map.top()..=map.area().bottom() {
+        for x in map.left()..=map.area().right() {
             let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
@@ -74,7 +74,54 @@ fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
 }
 
 fn main() {
+    /* let values: Box<[(Inclusion, Box<dyn PlacedShape>); 2]> = Box::new([
+        (
+            Inclusion::Include,
+            Box::new(Oval::new(Position::new(0, 0), Size::new(22, 22))),
+        ),
+        (
+            Inclusion::Exclude,
+            Box::new(InvertPlacedShape::new(Oval::new(Position::new(6, 6), Size::new(10, 10)))),
+        ),
+    ]);
+
+    let its_a_big_plus = PlacedShapeSlice::new(values);
+
     let map_id = DunGen::new(SparseMap::new())
+        .gen_with(EmptyRoomGenerator::new(its_a_big_plus.clone()))
+        .gen_with(WalledRoomGenerator::new(its_a_big_plus))
+        .build(); */
+
+    let values: Box<[(Inclusion, Box<dyn PlacedShape>); 2]> = Box::new([
+        (
+            Inclusion::Include,
+            Box::new(Area::new(Position::new(2, 0), Size::new(5, 9))),
+        ),
+        (
+            Inclusion::Include,
+            Box::new(Area::new(Position::new(0, 2), Size::new(9, 5))),
+        ),
+    ]);
+
+    let its_a_big_plus = PlacedShapeSlice::new(values);
+
+    let map_id = DunGen::new(SparseMap::new())
+        .gen_with(EmptyRoomGenerator::new(its_a_big_plus.clone()))
+        .gen_with(WalledRoomGenerator::new(its_a_big_plus))
+        .build();
+
+    /* let map_id = DunGen::new(SparseMap::new())
+    .gen_with(EmptyRoomGenerator::new(Oval::new(
+        Position::new(0, 0),
+        Size::new(20, 20),
+    )))
+    .gen_with(WalledRoomGenerator::new(Oval::new(
+        Position::new(0, 0),
+        Size::new(20, 20),
+    )))
+    .build(); */
+
+    /* let map_id = DunGen::new(SparseMap::new())
         .gen_with(EmptyRoomGenerator::new(Size::new(10, 10)))
         .gen_with(WalledRoomGenerator::new(Size::zero()))
         .build();
@@ -95,7 +142,7 @@ fn main() {
 
     let map_id = DunGen::new(map_id)
         .gen_with(WalledRoomGenerator::new(Size::zero()))
-        .build();
+        .build(); */
 
     /*
     let num_portals = CountRange::new(2, 5).provide_count();
