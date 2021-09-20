@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 dungen_minion = { path = "../dungen_minion" }
+
+[features]
+strict = []

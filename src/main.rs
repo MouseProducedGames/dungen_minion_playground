@@ -1,5 +1,10 @@
+#![warn(clippy::all, clippy::pedantic)]
+#![cfg_attr(feature = "strict", deny(warnings))]
+
 // External includes.
+#[allow(clippy::wildcard_imports)]
 use dungen_minion::geometry::*;
+#[allow(clippy::wildcard_imports)]
 use dungen_minion::*;
 
 // Standard includes.
@@ -8,6 +13,7 @@ use std::collections::HashSet;
 // Internal includes.
 
 #[allow(clippy::borrowed_box)]
+#[allow(dead_code)]
 fn draw_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
     if drawn.contains(&map_id) {
         return;
@@ -23,11 +29,10 @@ fn draw_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
             let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
-                Some(TileType::Void) => ' ',
+                Some(TileType::Void) | None => ' ',
                 Some(TileType::Floor) => '.',
                 Some(TileType::Wall) => '#',
                 Some(TileType::Portal) => '+',
-                None => ' ',
             };
 
             print!("{}", ch);
@@ -35,12 +40,13 @@ fn draw_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
         println!();
     }
 
-    for portal in map.portals() {
+    /* for portal in map.portals() {
         draw_placed_map(portal.target(), drawn);
-    }
+    } */
 }
 
 #[allow(clippy::borrowed_box)]
+#[allow(dead_code)]
 fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
     if drawn.contains(&map_id) {
         return;
@@ -56,11 +62,10 @@ fn draw_placed_map(map_id: MapId, drawn: &mut HashSet<MapId>) {
             let tile_type = map.tile_type_at(Position::new(x, y));
 
             let ch = match tile_type {
-                Some(TileType::Void) => ' ',
+                Some(TileType::Void) | None => ' ',
                 Some(TileType::Floor) => '.',
                 Some(TileType::Wall) => '#',
                 Some(TileType::Portal) => '+',
-                None => ' ',
             };
 
             print!("{}", ch);
@@ -81,17 +86,21 @@ fn main() {
         ),
         (
             Inclusion::Exclude,
-            Box::new(InvertPlacedShape::new(Oval::new(Position::new(6, 6), Size::new(10, 10)))),
+            Box::new(InvertPlacedShape::new(Oval::new(
+                Position::new(6, 6),
+                Size::new(10, 10),
+            ))),
         ),
     ]);
 
     let its_a_big_plus = PlacedShapeSlice::new(values);
 
     let map_id = DunGen::new(SparseMap::new())
-        .gen_with(EmptyRoomGenerator::new(its_a_big_plus.clone()))
-        .gen_with(WalledRoomGenerator::new(its_a_big_plus))
-        .build(); */
+    .gen_with(EmptyRoomGenerator::new(its_a_big_plus.clone()))
+    .gen_with(WalledRoomGenerator::new(its_a_big_plus))
+    .build(); */
 
+    /*
     let values: Box<[(Inclusion, Box<dyn PlacedShape>); 2]> = Box::new([
         (
             Inclusion::Include,
@@ -109,17 +118,18 @@ fn main() {
         .gen_with(EmptyRoomGenerator::new(its_a_big_plus.clone()))
         .gen_with(WalledRoomGenerator::new(its_a_big_plus))
         .build();
+    */
 
-    /* let map_id = DunGen::new(SparseMap::new())
-    .gen_with(EmptyRoomGenerator::new(Oval::new(
-        Position::new(0, 0),
-        Size::new(20, 20),
-    )))
-    .gen_with(WalledRoomGenerator::new(Oval::new(
-        Position::new(0, 0),
-        Size::new(20, 20),
-    )))
-    .build(); */
+    let map_id = DunGen::new(SparseMap::new())
+        .gen_with(&EmptyRoomGenerator::new(Oval::new(
+            Position::new(0, 0),
+            Size::new(22, 22),
+        )))
+        .gen_with(&WalledRoomGenerator::new(Oval::new(
+            Position::new(0, 0),
+            Size::new(22, 22),
+        )))
+        .build();
 
     /* let map_id = DunGen::new(SparseMap::new())
         .gen_with(EmptyRoomGenerator::new(Size::new(10, 10)))
@@ -179,6 +189,14 @@ fn main() {
             ]),
         ))
         .gen_with(MergePortalMapsAsSubMapsGenerator::new(2, |_| true))
+        .gen_with(FillTilesGenerator::new(
+            Oval::new(Position::new(7, 7), Size::new(10, 10)),
+            TileType::Void,
+        ))
+        .gen_with(WalledRoomGenerator::new(InvertPlacedShape::new(Oval::new(
+            Position::new(7, 7),
+            Size::new(10, 10),
+        ))))
         .build();
     */
 
